@@ -1,0 +1,18 @@
+## Interface: 11305
+## Title: DIY
+## Notes: Show what you can create with your trade and cradft skills
+## Author: Martin Hassman
+## Version: 0.1
+## OptionalDeps: WoWUnit
+## SavedVariables: DIYSharedData
+## SavedVariablesPerCharacter: DIYSettings, DIYData
+
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+
+core.lua
+events.lua
+hooks.lua
+slashcommands.lua
+broker.lua
