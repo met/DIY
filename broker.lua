@@ -24,6 +24,12 @@ local addonName, NS = ...;
 
 local dataobj;
 
+local cYellow = "\124cFFFFFF00";
+local cWhite = "\124cFFFFFFFF";
+local cRed = "\124cFFFF0000";
+local cLightBlue = "\124cFFadd8e6";
+local cGreen1 = "\124cFF38FFBE";
+
 -- updateBrokerText: work correctly even when no broker is working
 function NS.updateBrokerText(text)
 	if dataobj == nil then
@@ -59,8 +65,22 @@ dataobj = ldb:NewDataObject(addonName, {
 
 function dataobj:OnTooltipShow()
 	self:AddLine(addonName.." v"..GetAddOnMetadata(addonName, "version"));
+	self:AddLine(cWhite.."Can create right now:");	
 	self:AddLine(" ");
-	self:AddLine("Something...");
+
+
+	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+
+	for skillName, creatableItemsList in pairs(creatableItems) do
+		self:AddLine(cGreen1..skillName);
+
+		for itemName, itemCount in pairs(creatableItemsList) do
+			self:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);		
+		end
+
+		self:AddLine(" ");		
+	end
+
 end
 
 function dataobj:OnEnter()

@@ -46,6 +46,11 @@ function events.ADDON_LOADED(...)
 		DIYData = {};
 	end
 
+	if DIYData.knownRecipes == nil then
+		DIYData.knownRecipes = {};
+	end	
+
+	--make addon persistent data available over all addon files
 	NS.sharedData = DIYSharedData;
 	NS.settings = DIYSettings;
 	NS.data = DIYData;
@@ -58,6 +63,26 @@ function frame:OnEvent(event, ...)
 		if arg1 == addonName then
 			events.ADDON_LOADED(...)
 		end
+	elseif event == "TRADE_SKILL_UPDATE" then
+		--print(cLightBlue..event);
+
+		local skillName, curSkill, maxSkill = GetTradeSkillLine();
+		if skillName ~= nil and skillName ~= "UNKNOWN" then -- sometimes data are not ready yet
+			--print(skillName, curSkill, maxSkill);
+			NS.data.knownRecipes[skillName] = NS.getKnownTradeSkillRecipes();
+		end
+
+	elseif event == "CRAFT_UPDATE" then
+		print(cLightBlue..event);
+		-- TODO similar like TRADE_SKILL_UPDATE
+
+		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.lua
+		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.lua
+		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_CraftUI/Blizzard_CraftUI.lua
+		--GetCraftDescription(index) text line, nefunguje??
+		--GetCraftNumReagents(index)
+		--GetCraftReagentInfo(index, reagentIndex); = name, texture-id, howmuchneed, howmuchhave
+
 	else
 		print(cRed.."ERROR. Received unhandled event.");
 		print(event, ...);
@@ -67,6 +92,8 @@ end
 
 
 frame:RegisterEvent("ADDON_LOADED");
+frame:RegisterEvent("TRADE_SKILL_UPDATE");
+frame:RegisterEvent("CRAFT_UPDATE");
 
 frame:SetScript("OnEvent", frame.OnEvent);
 

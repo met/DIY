@@ -33,4 +33,5 @@ local cGreen1 = "\124cFF38FFBE";
 SLASH_DIY1 = "/diy";
 SlashCmdList["DIY"] = function(msg)
 
+	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 end

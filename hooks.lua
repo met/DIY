@@ -73,8 +73,19 @@ local function hookedActionButtonTooltip(self)
 	if profIDs[slotId] ~= nil then
 		-- tooltip is for proffesion button
 
-		--GameTooltip:AddLine("Something...");
-		--GameTooltip:Show();
+		local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+
+		if creatableItems[profIDs[slotId]] ~= nil then
+			GameTooltip:AddLine(cGreen1.."Can create:");
+
+			for itemName, itemCount in pairs(creatableItems[profIDs[slotId]]) do
+				GameTooltip:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);
+			end
+
+			GameTooltip:Show();
+
+		end
+
 	end
 
 	return;	
