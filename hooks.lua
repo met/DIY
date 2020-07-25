@@ -91,8 +91,23 @@ local function hookedActionButtonTooltip(self)
 	return;	
 end
 
+function hookedItemTooltip(tooltip)
+	local itemName, itemLink = tooltip:GetItem();
+	local usedInRecipes = NS.whereIsItemUsed(NS.data.knownRecipes, itemName);
+	if usedInRecipes ~= nil and #usedInRecipes > 0 then
+		tooltip:AddLine("Used in:");
+		for recipeName,v in ipairs(usedInRecipes) do
+			tooltip:AddLine(cWhite..v);
+		end
+		tooltip:Show();
+	end
+end
+
 
 initProffesionList();
 
 -- hook for all actionbuttons tooltips
 hooksecurefunc("ActionButton_SetTooltip", hookedActionButtonTooltip);
+
+-- hook for all items in bags tooltips
+GameTooltip:HookScript("OnTooltipSetItem", hookedItemTooltip)

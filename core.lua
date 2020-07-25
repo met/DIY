@@ -36,7 +36,10 @@ function NS.getKnownTradeSkillRecipes()
 
 		-- iterate all lines, some are recipes some are headers
 		for i = 1, GetNumTradeSkills() do
-			local recipeName = GetTradeSkillInfo(i); -- https://wowwiki.fandom.com/wiki/API_GetTradeSkillInfo
+			local recipeName, skillType = GetTradeSkillInfo(i); -- https://wowwiki.fandom.com/wiki/API_GetTradeSkillInfo
+			-- skillType can be "trivial", "easy", "medium", "optimal", "difficult"
+			-- optimal = orange, medium = yellow, easy=green, trivial=gray
+			-- TODO can highlight oramge/yellow doable recepies from green/gray
 			local numReagents = GetTradeSkillNumReagents(i);
 
 			--print(i, recipeName, " # ", numReagents);
@@ -162,4 +165,26 @@ function NS.checkDoableRecipes(recipes, reagents)
 	end
 
 	return doable;
+end
+
+-- check in which recepies (known to player) is current item used
+-- return { [0] = "recipe 1", [1] = "recipe2", ...}
+function NS.whereIsItemUsed(knownRecipes, itemName)
+	local itemIsUsedIn = {};
+
+	for skillName,recipesList in pairs(knownRecipes) do
+
+		for recipe,reagentsList in pairs(recipesList) do
+
+			for reagentName, _ in pairs(reagentsList) do
+				if reagentName == itemName then
+					table.insert(itemIsUsedIn, recipe);
+				end
+			end
+
+		end
+
+	end
+
+	return itemIsUsedIn;
 end
