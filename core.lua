@@ -29,6 +29,26 @@ local cRed = "\124cFFFF0000";
 local cLightBlue = "\124cFFadd8e6";
 local cGreen1 = "\124cFF38FFBE";
 
+
+-- IDs for professions
+-- data from Classic db, ID are in URL eg. https://classicdb.ch/?spell=3413
+
+NS.professions = {  -- from appretince, journeyman, expert, artisan
+	["Cooking"]        = {2550, 3102, 3413, 18260},
+	["First Aid"]      = {3273, 3274, 7924, 10846},
+	["Fishing"]        = {7620, 7731, 7732, 18248},
+	["Alchemy"]        = {2259, 3101, 3464, 11611},
+	["Blacksmithing"]  = {2018, 3100, 3538, 9785}, 
+	["Enchanting"]     = {7411, 7412, 7413, 13920},
+	["Engineering"]    = {4036, 4037, 4038, 12656},
+	["Herbalism"]      = {}, -- no icon
+	["Leatherworking"] = {2108, 3104, 3811, 10662},
+	["Mining"]         = {2575, 2576, 3564, 10248, 2656}, -- last is for smelting spell
+	["Skinning"]       = {8613, 8617, 8613, 10768},
+	["Tailoring"]      = {3908, 3909, 3910, 12180},
+};
+
+
 -- Grab known recipes from currently opened window of one tradeskill
 -- return: { "recipe name 1" = { "reagent1" = count, "reagent2" = count }, "recipe name 2" = {...}, ... }
 function NS.getKnownTradeSkillRecipes()
@@ -187,4 +207,119 @@ function NS.whereIsItemUsed(knownRecipes, itemName)
 	end
 
 	return itemIsUsedIn;
+end
+
+
+-- Create table that map action button ids to action button names
+-- { [1] = name1, [2] = name2, ... }
+function NS.getActionButtons()
+	local bars = { "Action", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight","MultiBarLeft"};
+	local buttons = {};
+
+	for _, bar in pairs(bars) do
+		for i = 1,NUM_ACTIONBAR_BUTTONS do -- NUM_ACTIONBAR_BUTTONS=12
+			local buttonName = bar.."Button"..i; 
+			local button = _G[buttonName];
+			local buttonId = tonumber(button.action);
+
+			if button ~= nil then
+				buttons[buttonId] = bar.."Button"..i; -- button.action is index used in GetAction* API functions;
+				--print(button.action, tonumber(button.action), buttons[buttonId]);
+			end
+		end
+	end
+
+	-- TODO do not need to do this again all the time, can cache result
+	return buttons;
+end
+
+function findSkillButtons(skillName, actionButtons)
+	local foundButtons = {};
+
+	for buttonId, buttonName in pairs(actionButtons) do -- cannot use ipairs,some indexes might be missing
+		local actionType, actionId, subType = GetActionInfo(buttonId);
+
+		local found = false;
+
+		for i,id in ipairs(NS.professions[skillName]) do
+			if actionId == id then
+				found = true;
+				break;
+			end
+		end
+
+		if found then
+			table.insert(foundButtons, buttonId);
+		end
+	end
+
+	-- TODO do not need to call this again all the time, can cache results, invalidate cache after multibar changes
+	return foundButtons;	
+end
+
+-- thanks to https://gitlab.com/sigz/ColoredInventoryItems
+local function createBorder(name, parent, r, g, b)
+	local defaultWidth = 68;
+	local defaultHeight = 68;
+
+    local border = parent:CreateTexture(name .. 'MyBorder', 'OVERLAY');
+
+    border:SetTexture("Interface\\Buttons\\UI-ActionButton-Border");
+    border:SetBlendMode('ADD');
+    border:SetWidth(defaultWidth);
+    border:SetHeight(defaultHeight);
+    border:SetPoint("CENTER", parent, "CENTER", 0, 0);
+    border:SetAlpha(0.75);
+	border:SetVertexColor(r,g,b); -- rgb; 0-1.0, 0-1.0, 0-1.0
+    border:Show();
+
+    return border;
+end
+
+-- show border
+-- if border does not exist yet, create one
+local function showBorder(buttonName)
+	if _G[buttonName].diyBorder == nil then
+		local border = createBorder(buttonName.."Border", _G[buttonName], 1, 0, 0);
+		_G[buttonName].diyBorder = border;
+	else
+		_G[buttonName].diyBorder:Show(); --border exist, show it
+	end
+end
+
+local function hideBorder(buttonName)
+	if _G[buttonName].diyBorder ~= nil then
+		-- TODO remove border here
+		_G[buttonName].diyBorder:Hide();
+	end
+end
+
+function NS.updateActionButtonBorders()
+	-- TODO what if player change multibars? I should listen to change bars event and reset all borders
+
+	local actionButtons = getActionButtons();
+	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+
+	--cycle over all skills
+	for skillName,_ in pairs(NS.professions) do
+		local skillBtns = findSkillButtons(skillName, actionButtons);
+
+		--show/hide border in skill buttons
+		if creatableItems[skillName] ~= nil then
+			if skillBtns ~= nil then
+				for _,buttonId in pairs(skillBtns) do
+					local buttonName = actionButtons[buttonId];
+					showBorder(buttonName);
+				end
+			end
+		else
+			--no doable recepies, remove old border if exist
+			if skillBtns ~= nil then
+				for _,buttonId in pairs(skillBtns) do
+					local buttonName = actionButtons[buttonId];
+					hideBorder(buttonName);
+				end			
+			end
+		end	
+	end
 end

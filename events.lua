@@ -83,6 +83,8 @@ function frame:OnEvent(event, ...)
 		--GetCraftNumReagents(index)
 		--GetCraftReagentInfo(index, reagentIndex); = name, texture-id, howmuchneed, howmuchhave
 
+	elseif event == "BAG_UPDATE" then
+		NS.updateActionButtonBorders();
 	else
 		print(cRed.."ERROR. Received unhandled event.");
 		print(event, ...);
@@ -94,6 +96,7 @@ end
 frame:RegisterEvent("ADDON_LOADED");
 frame:RegisterEvent("TRADE_SKILL_UPDATE");
 frame:RegisterEvent("CRAFT_UPDATE");
+frame:RegisterEvent("BAG_UPDATE");
 
 frame:SetScript("OnEvent", frame.OnEvent);
 

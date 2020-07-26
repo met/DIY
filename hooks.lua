@@ -29,32 +29,15 @@ local cLightBlue = "\124cFFadd8e6";
 local cGreen1 = "\124cFF38FFBE";
 
 
--- IDs for professions
--- data from Classic db, ID are in URL eg. https://classicdb.ch/?spell=3413
-
-local professions = {  -- from appretince, journeyman, expert, artisan
-	["Cooking"]        = {2550, 3102, 3413, 18260},
-	["First Aid"]      = {3273, 3274, 7924, 10846},
-	["Fishing"]        = {7620, 7731, 7732, 18248},
-	["Alchemy"]        = {2259, 3101, 3464, 11611},
-	["Blacksmithing"]  = {2018, 3100, 3538, 9785}, 
-	["Enchanting"]     = {7411, 7412, 7413, 13920},
-	["Engineering"]    = {4036, 4037, 4038, 12656},
-	["Herbalism"]      = {}, -- no icon
-	["Leatherworking"] = {2108, 3104, 3811, 10662},
-	["Mining"]         = {2575, 2576, 3564, 10248, 2656}, -- last is for smelting spell
-	["Skinning"]       = {8613, 8617, 8613, 10768},
-	["Tailoring"]      = {3908, 3909, 3910, 12180},
-};
 
 -- profIDs, table of pairs ["spellid"] = professionName, ["spellid"] = professionName, ...
 -- ["2550"] = "Cooking", ["3102"] = "Cooking", ...
--- reverse of professions table
+-- reverse of NS.professions table
 local profIDs = {};
 
 -- transform professions{} into profIDs{}
 local function initProffesionList()
-	for k,v in pairs(professions) do
+	for k,v in pairs(NS.professions) do
 		for k1,v1 in ipairs(v) do
 			profIDs[v1] = k;
 		end
