@@ -34,11 +34,20 @@ local events = {};
 
 NS.msgPrefix = cYellow.."["..addonName.."] "..cWhite;
 
-local function setDegaultSetting(DIYSettings)
+local function setDefaultSettings(DIYSettings)
 	DIYSettings.debug = false;
 end
 
 function events.ADDON_LOADED(...)
+	local arg1 = select(1, ...);
+
+	--ADDON_LOADED event is raised for every running addon,
+	-- 1st argument contains that addon name
+	-- we response only for our addon call and ignore the others
+	if arg1 ~= addonName then
+		return;
+	end
+
 	print(NS.msgPrefix.."version "..GetAddOnMetadata(addonName, "version")..". Use "..SLASH_DIY1.." for help");
 
 	if DIYSharedData == nil then
@@ -47,7 +56,7 @@ function events.ADDON_LOADED(...)
 
 	if DIYSettings == nil then
 		DIYSettings = {};
-		setDegaultSetting(DIYSettings);
+		setDefaultSettings(DIYSettings);
 	end
 
 	if DIYData == nil then
@@ -64,44 +73,40 @@ function events.ADDON_LOADED(...)
 	NS.data = DIYData;
 end
 
-function frame:OnEvent(event, ...)
-	local arg1 = select(1, ...);
+-- Window with player's trading skills has been opened, load all known recipes
+function events.TRADE_SKILL_UPDATE(...)
+	local skillName, curSkill, maxSkill = GetTradeSkillLine();
 
-	if event == "ADDON_LOADED" then
-		if arg1 == addonName then
-			events.ADDON_LOADED(...)
-		end
-	elseif event == "TRADE_SKILL_UPDATE" then
-		--print(cLightBlue..event);
-
-		local skillName, curSkill, maxSkill = GetTradeSkillLine();
-		if skillName ~= nil and skillName ~= "UNKNOWN" then -- sometimes data are not ready yet
-			--print(skillName, curSkill, maxSkill);
-			NS.data.knownRecipes[skillName] = NS.getKnownTradeSkillRecipes();
-		end
-
-	elseif event == "CRAFT_UPDATE" then
-		print(cLightBlue..event);
-		-- TODO similar like TRADE_SKILL_UPDATE
-
-		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.lua
-		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.lua
-		-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_CraftUI/Blizzard_CraftUI.lua
-		--GetCraftDescription(index) text line, nefunguje??
-		--GetCraftNumReagents(index)
-		--GetCraftReagentInfo(index, reagentIndex); = name, texture-id, howmuchneed, howmuchhave
-
-	elseif event == "BAG_UPDATE" then
-		NS.updateActionButtonBorders();
-	else
-		if NS.settings.debug then
-			print(cRed.."ERROR. Received unhandled event.");
-			print(cRed, event, ...);
-		end
+	if skillName ~= nil and skillName ~= "UNKNOWN" then -- sometimes data are not ready yet
+		NS.data.knownRecipes[skillName] = NS.getKnownTradeSkillRecipes();
 	end
-
 end
 
+-- Window with player's crafting skills has been opened, load all known recipes
+function events.CRAFT_UPDATE(...)
+	-- TODO similar like TRADE_SKILL_UPDATE
+
+	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.lua
+	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.lua
+	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_CraftUI/Blizzard_CraftUI.lua
+	--GetCraftDescription(index) text line, nefunguje??
+	--GetCraftNumReagents(index)
+	--GetCraftReagentInfo(index, reagentIndex); = name, texture-id, howmuchneed, howmuchhave
+end
+
+
+function events.BAG_UPDATE(...)
+	NS.updateActionButtonBorders();
+end
+
+-- Call event handlers or log error for unknow events
+function frame:OnEvent(event, ...)
+	if events[event] ~= nil then
+		events[event](...);
+	else
+		NS.logError("Received unhandled event:", event, ...);
+	end
+end
 
 frame:RegisterEvent("ADDON_LOADED");
 frame:RegisterEvent("TRADE_SKILL_UPDATE");
@@ -109,4 +114,3 @@ frame:RegisterEvent("CRAFT_UPDATE");
 frame:RegisterEvent("BAG_UPDATE");
 
 frame:SetScript("OnEvent", frame.OnEvent);
-

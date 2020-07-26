@@ -34,11 +34,7 @@ SLASH_DIY1 = "/diy";
 SlashCmdList["DIY"] = function(msg)
 
 	if msg == "" or msg =="help" then
-		print(cYellow, addonName, "Usage:")
-		print(cYellow, SLASH_DIY1, "help -- this message");
-		print(cYellow, SLASH_DIY1, "debug -- set debug on");
-		print(cYellow, SLASH_DIY1, "/diy nodebug -- set debug off");
-		print(cYellow, SLASH_DIY1, "debug? -- show current debug state");
+		NS.printUsage();
 	elseif msg == "debug" then
 		NS.settings.debug = true;
 		print(NS.msgPrefix, "Debug is on.");
@@ -50,4 +46,12 @@ SlashCmdList["DIY"] = function(msg)
 	else
 		--
 	end
+end
+
+function NS.printUsage()
+		print(cYellow, addonName, "Usage:");
+		print(cYellow, SLASH_DIY1, "help -- this message");
+		print(cYellow, SLASH_DIY1, "debug -- set debug on");
+		print(cYellow, SLASH_DIY1, "/diy nodebug -- set debug off");
+		print(cYellow, SLASH_DIY1, "debug? -- show current debug state");
 end

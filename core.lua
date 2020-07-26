@@ -73,11 +73,9 @@ function NS.getKnownTradeSkillRecipes()
 					local reagentName, _, reagentCount = GetTradeSkillReagentInfo(i, reagent);
 					if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
 						-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fail
-						-- can wait and retrieve information during next call
-						if NS.settings.debug then
-							print(cRed,"ERROR reagentName is nil, ignoring recipe ", recipeName);
-							recipe = {}; -- if there is infot about other reagents, delete it
-						end
+						-- can wait and retrieve information during next call, just log error
+						NS.logInfo("In getKnownTradeSkillRecipes(). ReagentName is nil, ignoring recipe: ", recipeName);
+						recipe = {}; -- if there is info about other reagents, delete it
 					else
 						recipe[reagentName] = tonumber(reagentCount);
 					end
@@ -326,4 +324,16 @@ function NS.updateActionButtonBorders()
 			end
 		end	
 	end
+end
+
+function NS.logError(...)
+	if NS.settings.debug then
+		print(cRed, addonName, "[ERROR]", ...);
+	end		
+end
+
+function NS.logInfo(...)
+	if NS.settings.debug then
+		print(cLightBlue, addonName, "[INFO]", ...);
+	end		
 end
