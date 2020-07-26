@@ -32,14 +32,22 @@ local cGreen1 = "\124cFF38FFBE";
 local frame = CreateFrame("FRAME");
 local events = {};
 
+NS.msgPrefix = cYellow.."["..addonName.."] "..cWhite;
+
+local function setDegaultSetting(DIYSettings)
+	DIYSettings.debug = false;
+end
 
 function events.ADDON_LOADED(...)
+	print(NS.msgPrefix.."version "..GetAddOnMetadata(addonName, "version")..". Use "..SLASH_DIY1.." for help");
+
 	if DIYSharedData == nil then
 		DIYSharedData = {};
 	end
 
 	if DIYSettings == nil then
 		DIYSettings = {};
+		setDegaultSetting(DIYSettings);
 	end
 
 	if DIYData == nil then
@@ -86,8 +94,10 @@ function frame:OnEvent(event, ...)
 	elseif event == "BAG_UPDATE" then
 		NS.updateActionButtonBorders();
 	else
-		print(cRed.."ERROR. Received unhandled event.");
-		print(event, ...);
+		if NS.settings.debug then
+			print(cRed.."ERROR. Received unhandled event.");
+			print(cRed, event, ...);
+		end
 	end
 
 end

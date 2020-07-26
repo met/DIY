@@ -67,13 +67,17 @@ function NS.getKnownTradeSkillRecipes()
 				local recipe = {};
 
 				for reagent = 1,numReagents do
-					--print(" # ", GetTradeSkillReagentInfo(i, reagent));
 					-- https://wowwiki.fandom.com/wiki/API_GetTradeSkillReagentInfo
-					-- reagentName, reagentTexture, reagentCount, playerReagentCount
+					-- reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo()
 
 					local reagentName, _, reagentCount = GetTradeSkillReagentInfo(i, reagent);
 					if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
-						print(cRed,"ERROR reagentName is nil, ignoring this recipe");
+						-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fail
+						-- can wait and retrieve information during next call
+						if NS.settings.debug then
+							print(cRed,"ERROR reagentName is nil, ignoring recipe ", recipeName);
+							recipe = {}; -- if there is infot about other reagents, delete it
+						end
 					else
 						recipe[reagentName] = tonumber(reagentCount);
 					end

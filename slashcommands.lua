@@ -33,5 +33,21 @@ local cGreen1 = "\124cFF38FFBE";
 SLASH_DIY1 = "/diy";
 SlashCmdList["DIY"] = function(msg)
 
-	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+	if msg == "" or msg =="help" then
+		print(cYellow, addonName, "Usage:")
+		print(cYellow, SLASH_DIY1, "help -- this message");
+		print(cYellow, SLASH_DIY1, "debug -- set debug on");
+		print(cYellow, SLASH_DIY1, "/diy nodebug -- set debug off");
+		print(cYellow, SLASH_DIY1, "debug? -- show current debug state");
+	elseif msg == "debug" then
+		NS.settings.debug = true;
+		print(NS.msgPrefix, "Debug is on.");
+	elseif msg == "nodebug" then
+		NS.settings.debug = false;
+		print(NS.msgPrefix, "Debug is off.");
+	elseif msg == "debug?" then
+		print(NS.msgPrefix, "debug=", NS.settings.debug);
+	else
+		--
+	end
 end
