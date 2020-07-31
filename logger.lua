@@ -22,6 +22,7 @@ SOFTWARE.
 
 local addonName, NS = ...;
 
+-- Call Errlogger addon if installed to log errors
 
 local cYellow = "\124cFFFFFF00";
 local cWhite = "\124cFFFFFFFF";
@@ -30,31 +31,39 @@ local cLightBlue = "\124cFFadd8e6";
 local cGreen1 = "\124cFF38FFBE";
 
 
--- Usage: /diy
-SLASH_DIY1 = "/diy";
-SlashCmdList["DIY"] = function(msg)
 
-	if msg == "" or msg =="help" then
-		NS.printUsage();
-	elseif msg == "debug" then
-		NS.settings.debug = true;
-		print(NS.msgPrefix, "Debug is on.");
-	elseif msg == "nodebug" then
-		NS.settings.debug = false;
-		print(NS.msgPrefix, "Debug is off.");
-	elseif msg == "debug?" then
-		print(NS.msgPrefix, "debug=", NS.settings.debug);
-	else
-		--
+function NS.logError(...)
+	if logError ~= nil then 		-- detect Errlogger addon
+		logError(addonName, ...); 	-- call Errlogger if present
+	else							-- or just print message to the output
+		print(cRed, addonName, "[ERROR]", ...);
 	end
 end
 
-NS.mainCmd = SLASH_DIY1;
+function NS.logWarning(...)
+	if logWarning ~= nil then
+		logWarning(addonName, ...);
+	else
+		print(cRed, addonName, "[WARNING]", ...);
+	end	
+end
 
-function NS.printUsage()
-		print(cYellow, addonName, "usage:");
-		print(cYellow, NS.mainCmd, "help -- this message");
-		print(cYellow, NS.mainCmd, "debug -- set debug on");
-		print(cYellow, NS.mainCmd, "/diy nodebug -- set debug off");
-		print(cYellow, NS.mainCmd, "debug? -- show current debug state");
+function NS.logInfo(...)
+	if NS.settings.debug then
+		if logInfo ~= nil then
+			logInfo(addonName, ...);
+		else
+			print(cLightBlue, addonName, "[INFO]", ...);
+		end
+	end		
+end
+
+function NS.logDebug(...)
+	if NS.settings.debug then
+		if logDebug ~= nil then
+			logDebug(addonName, ...);
+		else
+			print(cLightBlue, addonName, "[DEBUG]", ...);
+		end
+	end		
 end

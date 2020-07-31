@@ -34,8 +34,8 @@ local events = {};
 
 NS.msgPrefix = cYellow.."["..addonName.."] "..cWhite;
 
-local function setDefaultSettings(DIYSettings)
-	DIYSettings.debug = false;
+local function setDefaultSettings(setts)
+	setts.debug = false;
 end
 
 function events.ADDON_LOADED(...)
@@ -48,7 +48,7 @@ function events.ADDON_LOADED(...)
 		return;
 	end
 
-	print(NS.msgPrefix.."version "..GetAddOnMetadata(addonName, "version")..". Use "..SLASH_DIY1.." for help");
+	print(NS.msgPrefix.."version "..GetAddOnMetadata(addonName, "version")..". Use "..NS.mainCmd.." for help");
 
 	if DIYSharedData == nil then
 		DIYSharedData = {};

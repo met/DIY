@@ -3,7 +3,7 @@
 ## Notes: Show what you can create with your trade and cradft skills
 ## Author: Martin Hassman
 ## Version: 0.1
-## OptionalDeps: WoWUnit
+## OptionalDeps: WoWUnit, Errlogger
 ## SavedVariables: DIYSharedData
 ## SavedVariablesPerCharacter: DIYSettings, DIYData
 
@@ -16,3 +16,4 @@ events.lua
 hooks.lua
 slashcommands.lua
 broker.lua
+logger.lua
