@@ -48,7 +48,7 @@ function events.ADDON_LOADED(...)
 		return;
 	end
 
-	print(NS.msgPrefix.."version "..GetAddOnMetadata(addonName, "version")..". Use "..NS.mainCmd.." for help");
+	print(NS.msgPrefix.."v"..GetAddOnMetadata(addonName, "version")..". Use "..NS.mainCmd.." for help");
 
 	if DIYSharedData == nil then
 		DIYSharedData = {};
@@ -96,6 +96,14 @@ end
 
 
 function events.BAG_UPDATE(...)
+	--items in bag changes, calculate craftable items and adjust skill button borders
+	NS.updateActionButtonBorders();
+end
+
+
+function events.ACTIONBAR_SLOT_CHANGED(...)
+	--player changed some buttons, we need to adjust borders
+	NS.actionButtonsCache = nil;
 	NS.updateActionButtonBorders();
 end
 
@@ -112,5 +120,6 @@ frame:RegisterEvent("ADDON_LOADED");
 frame:RegisterEvent("TRADE_SKILL_UPDATE");
 frame:RegisterEvent("CRAFT_UPDATE");
 frame:RegisterEvent("BAG_UPDATE");
+frame:RegisterEvent("ACTIONBAR_SLOT_CHANGED");
 
 frame:SetScript("OnEvent", frame.OnEvent);

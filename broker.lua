@@ -30,7 +30,7 @@ local cRed = "\124cFFFF0000";
 local cLightBlue = "\124cFFadd8e6";
 local cGreen1 = "\124cFF38FFBE";
 
--- updateBrokerText: work correctly even when no broker is working
+-- updateBrokerText: must work correctly even when there is no broker library loaded
 function NS.updateBrokerText(text)
 	if dataobj == nil then
 		return;
@@ -52,22 +52,18 @@ end
 
 -- LibDataBroker documentation: https://github.com/tekkub/libdatabroker-1-1/wiki/How-to-provide-a-dataobject
 -- List of WOW UI icons: https://github.com/Gethe/wow-ui-textures/tree/live/ICONS
--- I use https://github.com/Gethe/wow-ui-textures/blob/live/ICONS/Trade_BlackSmithing.PNG
 
 dataobj = ldb:NewDataObject(addonName, {
-	type = "launcher",
-	icon = "Interface\\Icons\\Trade_BlackSmithing",
-	OnClick = function(clickedframe, button)
-		-- TODO open config here
-	end,
+	type = "data source",
+	text = "",
+	icon = "Interface\\Icons\\Trade_Engineering",
 });
 
 
 function dataobj:OnTooltipShow()
 	self:AddLine(addonName.." v"..GetAddOnMetadata(addonName, "version"));
-	self:AddLine(cWhite.."Can create right now:");	
+	self:AddLine(cWhite.."Can craft right now:");	
 	self:AddLine(" ");
-
 
 	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
@@ -75,22 +71,10 @@ function dataobj:OnTooltipShow()
 		self:AddLine(cGreen1..skillName);
 
 		for itemName, itemCount in pairs(creatableItemsList) do
-			self:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);		
+			self:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);
 		end
 
 		self:AddLine(" ");		
 	end
 
-end
-
-function dataobj:OnEnter()
-	GameTooltip:SetOwner(self, "ANCHOR_NONE")
-	GameTooltip:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-	GameTooltip:ClearLines()
-	dataobj.OnTooltipShow(GameTooltip)
-	GameTooltip:Show()
-end
-
-function dataobj:OnLeave()
-	GameTooltip:Hide()
 end

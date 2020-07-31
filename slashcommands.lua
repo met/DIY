@@ -45,7 +45,7 @@ SlashCmdList["DIY"] = function(msg)
 	elseif msg == "debug?" then
 		print(NS.msgPrefix, "debug=", NS.settings.debug);
 	else
-		--
+		print("Unknown parameter:", msg);
 	end
 end
 
@@ -55,6 +55,6 @@ function NS.printUsage()
 		print(cYellow, addonName, "usage:");
 		print(cYellow, NS.mainCmd, "help -- this message");
 		print(cYellow, NS.mainCmd, "debug -- set debug on");
-		print(cYellow, NS.mainCmd, "/diy nodebug -- set debug off");
+		print(cYellow, NS.mainCmd, "nodebug -- set debug off");
 		print(cYellow, NS.mainCmd, "debug? -- show current debug state");
 end

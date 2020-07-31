@@ -72,9 +72,9 @@ function NS.getKnownTradeSkillRecipes()
 
 					local reagentName, _, reagentCount = GetTradeSkillReagentInfo(i, reagent);
 					if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
-						-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fail
-						-- can wait and retrieve information during next call, just log error
-						NS.logWarning("In getKnownTradeSkillRecipes(). ReagentName is nil, ignoring recipe: ", recipeName);
+						-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fails
+						-- we can retrieve information during some next call, now just log message
+						NS.logDebug("In getKnownTradeSkillRecipes(). ReagentName is nil, ignoring recipe: ", recipeName);
 						recipe = {}; -- if there is info about other reagents, delete it
 					else
 						recipe[reagentName] = tonumber(reagentCount);
@@ -96,7 +96,7 @@ function NS.whatCanPlayerCreateNow(knownRecipes)
 	local foundReagents = NS.countReagentsInBags(allReagents);
 	local doableRecipes = NS.checkDoableRecipes(knownRecipes, foundReagents);
 
-	-- TODO: only for trade skill, missing craft skills (např. enchanting)
+	-- TODO: only for trade skill, now craft skills yet (eg. enchanting)
 	return doableRecipes;
 end
 
@@ -151,6 +151,7 @@ end
 function NS.checkDoableRecipes(recipes, reagents)
 	local doable = {};
 
+	-- TODO mark recipe color too
 	for skillName, recipesList in pairs(recipes) do
 
 		for recipeName,reagentsList in pairs(recipesList) do
@@ -212,9 +213,17 @@ function NS.whereIsItemUsed(knownRecipes, itemName)
 end
 
 
+-- caching NS.getActionButtons()
+NS.actionButtonsCache = nil;
+
 -- Create table that map action button ids to action button names
--- { [1] = name1, [2] = name2, ... }
+-- { [number1] = name1, [number2] = name2, ... }
+-- Names are like: MultiBarBottomLeftButton1, MultiBarBottomLeftButton2...
 function NS.getActionButtons()
+	if NS.actionButtonsCache ~= nil then -- use cache if exist
+		return NS.actionButtonsCache;
+	end
+
 	local bars = { "Action", "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight","MultiBarLeft"};
 	local buttons = {};
 
@@ -222,35 +231,42 @@ function NS.getActionButtons()
 		for i = 1,NUM_ACTIONBAR_BUTTONS do -- NUM_ACTIONBAR_BUTTONS=12
 			local buttonName = bar.."Button"..i; 
 			local button = _G[buttonName];
-			local buttonId = tonumber(button.action);
 
 			if button ~= nil then
-				buttons[buttonId] = bar.."Button"..i; -- button.action is index used in GetAction* API functions;
+				local buttonId = tonumber(button.action);				
+				buttons[buttonId] = buttonName; -- button.action is index used in GetAction* API functions;
 				--print(button.action, tonumber(button.action), buttons[buttonId]);
 			end
 		end
 	end
 
-	-- TODO do not need to do this again all the time, can cache result
+	NS.actionButtonsCache = buttons; -- save to cache
+
 	return buttons;
 end
 
-function findSkillButtons(skillName, actionButtons)
+
+-- true if is belongs to some proffesion skill skillName
+function NS.isIdOfProfession(professionIdList, actionId)
+	local found = false;
+
+	for _,id in ipairs(professionIdList) do
+		if actionId == id then
+			found = true;
+			break;
+		end
+	end
+
+	return found;
+end
+
+function NS.findSkillButtons(skillName, actionButtons)
 	local foundButtons = {};
 
 	for buttonId, buttonName in pairs(actionButtons) do -- cannot use ipairs,some indexes might be missing
 		local actionType, actionId, subType = GetActionInfo(buttonId);
 
-		local found = false;
-
-		for i,id in ipairs(NS.professions[skillName]) do
-			if actionId == id then
-				found = true;
-				break;
-			end
-		end
-
-		if found then
+		if NS.isIdOfProfession(NS.professions[skillName], actionId) then
 			table.insert(foundButtons, buttonId);
 		end
 	end
@@ -291,23 +307,21 @@ end
 
 local function hideBorder(buttonName)
 	if _G[buttonName].diyBorder ~= nil then
-		-- TODO remove border here
+		-- TODO cannot delete border/texture in framexml, so only hide it, sure?
 		_G[buttonName].diyBorder:Hide();
 	end
 end
 
 function NS.updateActionButtonBorders()
-	-- TODO what if player change multibars? I should listen to change bars event and reset all borders
-
-	local actionButtons = getActionButtons();
+	local actionButtons = NS.getActionButtons();
 	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
 	--cycle over all skills
 	for skillName,_ in pairs(NS.professions) do
-		local skillBtns = findSkillButtons(skillName, actionButtons);
+		local skillBtns = NS.findSkillButtons(skillName, actionButtons); -- get all actionbuttons for skill skillName
 
-		--show/hide border in skill buttons
-		if creatableItems[skillName] ~= nil then
+		if creatableItems[skillName] ~= nil then -- something can be crafted for skill skillName
+			-- show border for all actionbuttons of skill skillName
 			if skillBtns ~= nil then
 				for _,buttonId in pairs(skillBtns) do
 					local buttonName = actionButtons[buttonId];
@@ -315,7 +329,7 @@ function NS.updateActionButtonBorders()
 				end
 			end
 		else
-			--no doable recepies, remove old border if exist
+			--no doable recepies, remove old border if exist for all actionbutton of skill skillName
 			if skillBtns ~= nil then
 				for _,buttonId in pairs(skillBtns) do
 					local buttonName = actionButtons[buttonId];
@@ -324,4 +338,9 @@ function NS.updateActionButtonBorders()
 			end
 		end	
 	end
+
+	-- TODO need to reaft to  toolbar change 
+	-- know I put border to all new buttons after toolbar change,
+	-- but need also to remove border from old buttons after change, can cycle all buttons and remove border?
+	-- or just remember the old ones somewhere?
 end
