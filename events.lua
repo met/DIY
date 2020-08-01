@@ -41,7 +41,7 @@ end
 function events.ADDON_LOADED(...)
 	local arg1 = select(1, ...);
 
-	--ADDON_LOADED event is raised for every running addon,
+	-- ADDON_LOADED event is raised for every running addon,
 	-- 1st argument contains that addon name
 	-- we response only for our addon call and ignore the others
 	if arg1 ~= addonName then

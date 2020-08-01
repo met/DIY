@@ -47,22 +47,20 @@ end
 
 
 local function hookedActionButtonTooltip(self)
-	--table.foreach(self, function(k,v) print(k,v); end);
-
 	local actionType, slotId, subType = GetActionInfo(self.action);
 	-- actionType can be item or spell (all skill buttong are has actionType="spell")
 	-- print("slotId=",slotId," actionType=",actionType," subType=",subType);
 
-	if profIDs[slotId] ~= nil then
-		-- tooltip is for proffesion button
+	if profIDs[slotId] ~= nil then -- this tooltip is for proffesion action button
+		
+		local craftableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
-		local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
-
-		if creatableItems[profIDs[slotId]] ~= nil then
+		if craftableItems[profIDs[slotId]] ~= nil then -- found something craftable for this profession
 			GameTooltip:AddLine(cGreen1.."Can create:");
 
-			for itemName, itemCount in pairs(creatableItems[profIDs[slotId]]) do
-				GameTooltip:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);
+			for i, item in ipairs(craftableItems[profIDs[slotId]]) do
+				local color = NS.skillTypes[item.skillType]; -- skill color
+				GameTooltip:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
 			end
 
 			GameTooltip:Show();
@@ -76,11 +74,14 @@ end
 
 function hookedItemTooltip(tooltip)
 	local itemName, itemLink = tooltip:GetItem();
-	local usedInRecipes = NS.whereIsItemUsed(NS.data.knownRecipes, itemName);
+	local usedInRecipes = NS.whereIsItemUsed(itemName, NS.data.knownRecipes);
+
 	if usedInRecipes ~= nil and #usedInRecipes > 0 then
+
 		tooltip:AddLine("Used in:");
-		for recipeName,v in ipairs(usedInRecipes) do
-			tooltip:AddLine(cWhite..v);
+		for _,recipeInfo in ipairs(usedInRecipes) do
+			local color = NS.skillTypes[recipeInfo.skillType];
+			tooltip:AddLine(recipeInfo.recipeName, color.r, color.g, color.b);
 		end
 		tooltip:Show();
 	end

@@ -34,19 +34,26 @@ local cGreen1 = "\124cFF38FFBE";
 -- data from Classic db, ID are in URL eg. https://classicdb.ch/?spell=3413
 
 NS.professions = {  -- from appretince, journeyman, expert, artisan
-	["Cooking"]        = {2550, 3102, 3413, 18260},
-	["First Aid"]      = {3273, 3274, 7924, 10846},
-	["Fishing"]        = {7620, 7731, 7732, 18248},
-	["Alchemy"]        = {2259, 3101, 3464, 11611},
-	["Blacksmithing"]  = {2018, 3100, 3538, 9785}, 
-	["Enchanting"]     = {7411, 7412, 7413, 13920},
-	["Engineering"]    = {4036, 4037, 4038, 12656},
-	["Herbalism"]      = {}, -- no icon
-	["Leatherworking"] = {2108, 3104, 3811, 10662},
-	["Mining"]         = {2575, 2576, 3564, 10248, 2656}, -- last is for smelting spell
-	["Skinning"]       = {8613, 8617, 8613, 10768},
-	["Tailoring"]      = {3908, 3909, 3910, 12180},
+	["Cooking"]        = { 2550, 3102, 3413, 18260 },
+	["First Aid"]      = { 3273, 3274, 7924, 10846 },
+	["Fishing"]        = { 7620, 7731, 7732, 18248 },
+	["Alchemy"]        = { 2259, 3101, 3464, 11611 },
+	["Blacksmithing"]  = { 2018, 3100, 3538, 9785  }, 
+	["Enchanting"]     = { 7411, 7412, 7413, 13920 },
+	["Engineering"]    = { 4036, 4037, 4038, 12656 },
+	["Herbalism"]      = {                         }, -- no icon
+	["Leatherworking"] = { 2108, 3104, 3811, 10662 },
+	["Mining"]         = { 2575, 2576, 3564, 10248, 2656 }, -- last is for smelting spell
+	["Skinning"]       = { 8613, 8617, 8613, 10768 },
+	["Tailoring"]      = { 3908, 3909, 3910, 12180 },
 };
+
+-- Colors for all skillTypes, based on Blizzard_TradeSkillUI.lua: TradeSkillTypeColor
+NS.skillTypes = {};
+NS.skillTypes["optimal"] = { r = 1.00, g = 0.50, b = 0.25}; -- orange
+NS.skillTypes["medium"]  = { r = 1.00, g = 1.00, b = 0.00}; -- yellow
+NS.skillTypes["easy"]    = { r = 0.25, g = 0.75, b = 0.25}; -- green
+NS.skillTypes["trivial"] = { r = 0.50, g = 0.50, b = 0.50}; -- grey
 
 
 -- Grab known recipes from currently opened window of one tradeskill
@@ -57,35 +64,47 @@ function NS.getKnownTradeSkillRecipes()
 		-- iterate all lines, some are recipes some are headers
 		for i = 1, GetNumTradeSkills() do
 			local recipeName, skillType = GetTradeSkillInfo(i); -- https://wowwiki.fandom.com/wiki/API_GetTradeSkillInfo
-			-- skillType can be "trivial", "easy", "medium", "optimal", "difficult"
-			-- optimal = orange, medium = yellow, easy=green, trivial=gray
-			-- TODO can highlight oramge/yellow doable recepies from green/gray
+			-- skillType can be "trivial", "easy", "medium", "optimal", "difficult" ..or "header"
+			-- see NS.skillTypes
+
 			local numReagents = GetTradeSkillNumReagents(i);
 
-			--print(i, recipeName, " # ", numReagents);
-			if numReagents > 0 then
-				local recipe = {};
+			if skillType ~= "header" and numReagents > 0 then
 
-				for reagent = 1,numReagents do
-					-- https://wowwiki.fandom.com/wiki/API_GetTradeSkillReagentInfo
-					-- reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo()
+				local reagents = NS.getReagentsForSkill(i);
 
-					local reagentName, _, reagentCount = GetTradeSkillReagentInfo(i, reagent);
-					if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
-						-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fails
-						-- we can retrieve information during some next call, now just log message
-						NS.logDebug("In getKnownTradeSkillRecipes(). ReagentName is nil, ignoring recipe: ", recipeName);
-						recipe = {}; -- if there is info about other reagents, delete it
-					else
-						recipe[reagentName] = tonumber(reagentCount);
-					end
+				if reagents ~= nil then
+					recipes[recipeName] = { reagents = reagents, skillType = skillType };
 				end
-
-				recipes[recipeName] = recipe;
 			end
 		end
 
 		return recipes;
+end
+
+
+-- get reagents fokk skill-th line from opened skill window
+function NS.getReagentsForSkill(skill)
+	local numReagents = GetTradeSkillNumReagents(skill);
+	local recipe = {};
+
+	for reagent = 1,numReagents do
+		-- https://wowwiki.fandom.com/wiki/API_GetTradeSkillReagentInfo
+		-- reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo()
+		local reagentName, _, reagentCount = GetTradeSkillReagentInfo(skill, reagent);
+
+		if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
+			-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fails
+			-- we can retrieve information during some next call, now just log message
+			NS.logDebug("In getReagentsForSkill(). ReagentName is nil, ignoring recipe: ", recipeName);
+			recipe = nil; -- if there is info about other reagents, delete it
+			break;
+		else
+			recipe[reagentName] = tonumber(reagentCount);
+		end
+	end
+
+	return recipe;
 end
 
 -- check all recepies and ingredients
@@ -107,9 +126,9 @@ function NS.listAllReagentNames(recipes)
 
 	for skillName,recipesList in pairs(recipes) do
 
-		for recipe,reagentsList in pairs(recipesList) do
+		for recipe,skillInfo in pairs(recipesList) do
 
-			for reagentName, _ in pairs(reagentsList) do
+			for reagentName, _ in pairs(skillInfo.reagents) do
 				reagents[reagentName] = 0;
 			end
 
@@ -146,22 +165,30 @@ function NS.countReagentsInBags(reagents)
 	return foundReagents;
 end
 
+
+--[[
 -- check for which recipes has player enough reagents
--- return: { "skillname1" = { "recipe 1" = count, "recipe 2" = count, ... }, "skillname2" = {...}, ... }
+
+return: {
+	["skillname1"] = {
+		[0] = { recipeName = "recipe name 1", count = count, skillType = "skillType"},
+		[1] = { recipeName = "recipe name 2", count = count, skillType = "skillType"},
+	["skillname2"] = {...},
+	... 
+	}
+]]--
 function NS.checkDoableRecipes(recipes, reagents)
 	local doable = {};
 
-	-- TODO mark recipe color too
 	for skillName, recipesList in pairs(recipes) do
 
-		for recipeName,reagentsList in pairs(recipesList) do
+		for recipeName,skillInfo in pairs(recipesList) do
 			local howMany = 0; -- how many can create
 
-			for reagentName, reagentCount in pairs(reagentsList) do
+			for reagentName, reagentCount in pairs(skillInfo.reagents) do
 				if reagents[reagentName] == nil or reagents[reagentName] < reagentCount then
-					-- not enough of this reagent, we do not need to check any other
 					howMany = 0;
-					break;
+					break; -- not enough of this reagent, we do not need to check any other
 				end
 
 				-- how many pieces can create? check for least available reagent
@@ -172,7 +199,6 @@ function NS.checkDoableRecipes(recipes, reagents)
 				else 
 					howMany = math.min(howMany, howManyWithThisReagent); -- get the lowest value
 				end
-
 			end
 
 			if howMany > 0 then
@@ -180,8 +206,7 @@ function NS.checkDoableRecipes(recipes, reagents)
 					doable[skillName] = {};
 				end
 
-				--print("Can create:", recipeName, howMany);
-				doable[skillName][recipeName] = howMany;
+				table.insert(doable[skillName], { recipeName = recipeName, count = howMany, skillType = skillInfo.skillType });
 			end
 		end
 
@@ -190,18 +215,26 @@ function NS.checkDoableRecipes(recipes, reagents)
 	return doable;
 end
 
--- check in which recepies (known to player) is current item used
--- return { [0] = "recipe 1", [1] = "recipe2", ...}
-function NS.whereIsItemUsed(knownRecipes, itemName)
+--[[
+-- check in which recepies (known to player) is itemName used
+-- return { [0] = {recipename = name1, skillType = skillType1 }, ...}
+eg.: { 
+	[0] = { recipeName = "Linen Bandage", skillType = "trivial"},
+	[1] = { recipeName = "Heavy Linen Bandage", skillType = "optimal"},
+	...
+}
+--]]
+function NS.whereIsItemUsed(itemName, knownRecipes)
 	local itemIsUsedIn = {};
 
 	for skillName,recipesList in pairs(knownRecipes) do
 
-		for recipe,reagentsList in pairs(recipesList) do
+		for recipe,skillInfo in pairs(recipesList) do
 
-			for reagentName, _ in pairs(reagentsList) do
+			for reagentName, _ in pairs(skillInfo.reagents) do
 				if reagentName == itemName then
-					table.insert(itemIsUsedIn, recipe);
+					table.insert(itemIsUsedIn, { recipeName = recipe, skillType = skillInfo.skillType });
+					break; -- do not need to check other reagents for this recipe
 				end
 			end
 
@@ -316,7 +349,7 @@ function NS.updateActionButtonBorders()
 	local actionButtons = NS.getActionButtons();
 	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
-	--cycle over all skills
+	--cycle over all professions
 	for skillName,_ in pairs(NS.professions) do
 		local skillBtns = NS.findSkillButtons(skillName, actionButtons); -- get all actionbuttons for skill skillName
 

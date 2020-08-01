@@ -70,8 +70,9 @@ function dataobj:OnTooltipShow()
 	for skillName, creatableItemsList in pairs(creatableItems) do
 		self:AddLine(cGreen1..skillName);
 
-		for itemName, itemCount in pairs(creatableItemsList) do
-			self:AddDoubleLine(itemName, itemCount, 1,1,0,0,1,0);
+		for i, item in pairs(creatableItemsList) do
+			local color = NS.skillTypes[item.skillType];
+			self:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
 		end
 
 		self:AddLine(" ");		
