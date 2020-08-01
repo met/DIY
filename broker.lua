@@ -62,7 +62,7 @@ dataobj = ldb:NewDataObject(addonName, {
 
 function dataobj:OnTooltipShow()
 	self:AddLine(addonName.." v"..GetAddOnMetadata(addonName, "version"));
-	self:AddLine(cWhite.."Can craft right now:");	
+	self:AddLine(cWhite.."Craftable:");
 	self:AddLine(" ");
 
 	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
@@ -78,4 +78,5 @@ function dataobj:OnTooltipShow()
 		self:AddLine(" ");		
 	end
 
+	-- TODO with shift can show partially craftable items (when some reagents are missing)
 end

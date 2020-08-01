@@ -103,7 +103,8 @@ end
 
 function events.ACTIONBAR_SLOT_CHANGED(...)
 	--player changed some buttons, we need to adjust borders
-	NS.actionButtonsCache = nil;
+	NS.skillButtonsCache = nil; -- invalidate cache for skill buttons, buttons were changed
+	NS.hideAllActionButtonBorders();
 	NS.updateActionButtonBorders();
 end
 

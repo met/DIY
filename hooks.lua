@@ -85,6 +85,9 @@ function hookedItemTooltip(tooltip)
 		end
 		tooltip:Show();
 	end
+
+	--TODO with shift can show more information (e.g. which recepies are craftable, amount, and for noncraftable which other reagents are missing)
+	-- need to go though all bags NS.countReagentsInBags() (and cache, that is invalidated by BAG UPDATE event) and make invertoty of reagents, then go through all recipes and mark which are craftable, which are partly craftable (and what is missing) (also cache this)
 end
 
 

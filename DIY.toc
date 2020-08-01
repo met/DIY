@@ -17,3 +17,4 @@ hooks.lua
 slashcommands.lua
 broker.lua
 logger.lua
+actionbuttons.lua
