@@ -217,7 +217,7 @@ end
 
 --[[
 -- check in which recepies (known to player) is itemName used
--- return { [0] = {recipename = name1, skillType = skillType1 }, ...}
+-- return { [0] = {recipeName = name1, skillType = skillType1 }, ...}
 eg.: { 
 	[0] = { recipeName = "Linen Bandage", skillType = "trivial"},
 	[1] = { recipeName = "Heavy Linen Bandage", skillType = "optimal"},
@@ -243,6 +243,20 @@ function NS.whereIsItemUsed(itemName, knownRecipes)
 	end
 
 	return itemIsUsedIn;
+end
+
+-- Check skillTypes from list o items and return the best found skilltype
+function NS.getBestCraftableSkillType(items)
+	local skillTypes = { ["trivial"] = 1, ["easy"] = 2, ["medium"] = 3, ["optimal"] = 4 };
+	local bestFoundSkillType = "trivial";
+
+	for i,item in ipairs(items) do
+		if skillTypes[item.skillType] > skillTypes[bestFoundSkillType] then
+			bestFoundSkillType = item.skillType;
+		end
+	end
+
+	return bestFoundSkillType;
 end
 
 
@@ -320,7 +334,7 @@ local function createBorder(name, parent, r, g, b)
     border:SetWidth(defaultWidth);
     border:SetHeight(defaultHeight);
     border:SetPoint("CENTER", parent, "CENTER", 0, 0);
-    border:SetAlpha(0.75);
+    border:SetAlpha(0.9);
 	border:SetVertexColor(r,g,b); -- rgb; 0-1.0, 0-1.0, 0-1.0
     border:Show();
 
@@ -329,11 +343,12 @@ end
 
 -- show border
 -- if border does not exist yet, create one
-local function showBorder(buttonName)
+local function showBorder(buttonName, r, g, b)
 	if _G[buttonName].diyBorder == nil then
-		local border = createBorder(buttonName.."Border", _G[buttonName], 1, 0, 0);
+		local border = createBorder(buttonName.."Border", _G[buttonName], r, g, b);
 		_G[buttonName].diyBorder = border;
 	else
+		_G[buttonName].diyBorder:SetVertexColor(r,g,b);
 		_G[buttonName].diyBorder:Show(); --border exist, show it
 	end
 end
@@ -347,18 +362,20 @@ end
 
 function NS.updateActionButtonBorders()
 	local actionButtons = NS.getActionButtons();
-	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+	local craftableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
 	--cycle over all professions
 	for skillName,_ in pairs(NS.professions) do
 		local skillBtns = NS.findSkillButtons(skillName, actionButtons); -- get all actionbuttons for skill skillName
 
-		if creatableItems[skillName] ~= nil then -- something can be crafted for skill skillName
+		if craftableItems[skillName] ~= nil then -- something can be crafted for skill skillName
+			local bestSkillType = NS.getBestCraftableSkillType(craftableItems[skillName]);
+
 			-- show border for all actionbuttons of skill skillName
 			if skillBtns ~= nil then
 				for _,buttonId in pairs(skillBtns) do
 					local buttonName = actionButtons[buttonId];
-					showBorder(buttonName);
+					showBorder(buttonName, NS.skillTypes[bestSkillType].r, NS.skillTypes[bestSkillType].g, NS.skillTypes[bestSkillType].b);
 				end
 			end
 		else
@@ -372,7 +389,7 @@ function NS.updateActionButtonBorders()
 		end	
 	end
 
-	-- TODO need to reaft to  toolbar change 
+	-- TODO need to react to  toolbar change 
 	-- know I put border to all new buttons after toolbar change,
 	-- but need also to remove border from old buttons after change, can cycle all buttons and remove border?
 	-- or just remember the old ones somewhere?
