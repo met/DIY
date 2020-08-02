@@ -84,14 +84,13 @@ end
 
 -- Window with player's crafting skills has been opened, load all known recipes
 function events.CRAFT_UPDATE(...)
-	-- TODO similar like TRADE_SKILL_UPDATE
 
-	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TrainerUI/Blizzard_TrainerUI.lua
-	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_TradeSkillUI/Blizzard_TradeSkillUI.lua
-	-- https://github.com/satan666/WOW-UI-SOURCE/blob/master/AddOns/Blizzard_CraftUI/Blizzard_CraftUI.lua
-	--GetCraftDescription(index) text line, nefunguje??
-	--GetCraftNumReagents(index)
-	--GetCraftReagentInfo(index, reagentIndex); = name, texture-id, howmuchneed, howmuchhave
+	local skillName, curSkill, maxSkill = GetCraftDisplaySkillLine()
+
+	if skillName ~= nil and skillName ~= "UNKNOWN" then -- sometimes data are not ready yet
+		NS.data.knownRecipes[skillName] = NS.getKnownCraftRecipes();
+	end
+
 end
 
 

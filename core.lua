@@ -56,35 +56,89 @@ NS.skillTypes["easy"]    = { r = 0.25, g = 0.75, b = 0.25}; -- green
 NS.skillTypes["trivial"] = { r = 0.50, g = 0.50, b = 0.50}; -- grey
 
 
--- Grab known recipes from currently opened window of one tradeskill
--- return: { "recipe name 1" = { "reagent1" = count, "reagent2" = count }, "recipe name 2" = {...}, ... }
+--[[
+   Grab known recipes from currently opened window of one tradeskill
+   return: {
+	"recipe name 1" = {
+		reagents = {"reagent name1" = count, "reagent name2" = count, ... },
+		skillType = "skillType"
+	},
+	"recipe name 2" = {...}, 
+	... 
+	}
+--]]
 function NS.getKnownTradeSkillRecipes()
-		local recipes = {};
+	local recipes = {};
 
-		-- iterate all lines, some are recipes some are headers
-		for i = 1, GetNumTradeSkills() do
-			local recipeName, skillType = GetTradeSkillInfo(i); -- https://wowwiki.fandom.com/wiki/API_GetTradeSkillInfo
-			-- skillType can be "trivial", "easy", "medium", "optimal", "difficult" ..or "header"
-			-- see NS.skillTypes
+	-- iterate all lines, some are recipes some are headers
+	for i = 1, GetNumTradeSkills() do
+		local recipeName, skillType = GetTradeSkillInfo(i); -- https://wowwiki.fandom.com/wiki/API_GetTradeSkillInfo
+		-- skillType can be "trivial", "easy", "medium", "optimal", "difficult" ..or "header"
+		-- see NS.skillTypes
 
-			local numReagents = GetTradeSkillNumReagents(i);
+		local numReagents = GetTradeSkillNumReagents(i);
 
-			if skillType ~= "header" and numReagents > 0 then
+		if skillType ~= "header" and numReagents > 0 then
 
-				local reagents = NS.getReagentsForSkill(i);
+			if NS.skillTypes[skillType] == nill then
+				NS.logWarning("In getKnownTradeSkillRecipes() unknown skillType: ", skillType, " in recipe: ", recipeName);
+			end
 
-				if reagents ~= nil then
-					recipes[recipeName] = { reagents = reagents, skillType = skillType };
-				end
+			local reagents = NS.getReagentsForTradeSkill(i);
+
+			if reagents ~= nil then
+				recipes[recipeName] = { reagents = reagents, skillType = skillType };
 			end
 		end
+	end
 
-		return recipes;
+	return recipes;
+end
+
+--[[
+   Grab known recipes from currently opened window of one craftskill
+   return: {
+	"recipe name 1" = {
+		reagents = {"reagent name1" = count, "reagent name2" = count, ... },
+		skillType = "skillType"
+	},
+	"recipe name 2" = {...}, 
+	... 
+	}
+--]]
+function NS.getKnownCraftRecipes()
+	local recipes = {};
+
+	for i = 1, GetNumCrafts() do -- iterate over all lines
+		local recipeName, _, skillType = GetCraftInfo(i); -- https://wow.gamepedia.com/API_GetCraftInfo
+		-- skillType can be "trivial", "easy", "medium", "optimal", "difficult" ..or "header", "used", "none" accoring to Blizzard_CraftUI.lua
+
+		--print(i, GetCraftInfo(i));
+		--print("Name:",recipeName,"skillType:", skillType);
+
+		local numReagents = GetCraftNumReagents(i);
+
+		if skillType ~= "header" and numReagents > 0 then
+			if NS.skillTypes[skillType] == nill then
+				NS.logWarning("In getKnownCraftRecipes() unknown skillType: ", skillType, " in recipe: ", recipeName);
+			end
+
+			local reagents = NS.getReagentsForCraft(i);
+
+			if reagents ~= nil then
+				recipes[recipeName] = { reagents = reagents, skillType = skillType };
+			end
+		end
+	end
+
+	return recipes;
 end
 
 
--- get reagents fokk skill-th line from opened skill window
-function NS.getReagentsForSkill(skill)
+-- get reagents for skill-th line from opened trade skill window
+-- return {"reagent name1" = count, "reagent name2" = count, ... }
+function NS.getReagentsForTradeSkill(skill)
+	local recipeName = GetTradeSkillInfo(skill);
 	local numReagents = GetTradeSkillNumReagents(skill);
 	local recipe = {};
 
@@ -96,7 +150,7 @@ function NS.getReagentsForSkill(skill)
 		if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
 			-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fails
 			-- we can retrieve information during some next call, now just log message
-			NS.logDebug("In getReagentsForSkill(). ReagentName is nil, ignoring recipe: ", recipeName);
+			NS.logDebug("In getReagentsForTradeSkill(). ReagentName is nil, ignoring recipe: ", recipeName);
 			recipe = nil; -- if there is info about other reagents, delete it
 			break;
 		else
@@ -105,6 +159,33 @@ function NS.getReagentsForSkill(skill)
 	end
 
 	return recipe;
+end
+
+
+-- get reagents for skill-th line from opened craft window
+-- return {"reagent name1" = count, "reagent name2" = count, ... }
+function NS.getReagentsForCraft(skill)
+	local recipeName = GetCraftInfo(skill);
+	local numReagents = GetCraftNumReagents(skill);
+	local reagents = {};
+
+	for reagent = 1,numReagents do
+		-- https://wowwiki.fandom.com/wiki/API_GetCraftReagentInfo
+		local reagentName, _, reagentCount = GetCraftReagentInfo(skill, reagent);
+
+		if reagentName == nil or reagentCount == nil or tonumber(reagentCount) == nil then
+			-- sometimes data for all items are not loaded yet and GetTradeSkillReagentInfo fails
+			-- we can retrieve information during some next call, now just log message
+			NS.logDebug("In getReagentsForCraft(). ReagentName is nil, ignoring recipe: ", recipeName);
+			reagents = nil; -- if there is info about other reagents, delete it
+			break;
+		else
+			reagents[reagentName] = tonumber(reagentCount);
+		end
+
+	end
+
+	return reagents;
 end
 
 -- check all recepies and ingredients
