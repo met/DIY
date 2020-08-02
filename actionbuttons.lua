@@ -155,7 +155,7 @@ function NS.updateActionButtonBorders()
 				end
 			end
 		else
-			--no doable recepies, remove old border if exist for all actionbutton of skill skillName
+			--there are no doable recepies, remove old border if exist for all actionbutton of skill skillName
 			if skillBtns ~= nil then
 				for _,buttonId in pairs(skillBtns) do
 					local buttonName = actionButtons[buttonId];
@@ -165,8 +165,4 @@ function NS.updateActionButtonBorders()
 		end	
 	end
 
-	-- TODO need to react to  toolbar change 
-	-- know I put border to all new buttons after toolbar change,
-	-- but need also to remove border from old buttons after change, can cycle all buttons and remove border?
-	-- or just remember the old ones somewhere?
 end

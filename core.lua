@@ -119,6 +119,20 @@ function NS.whatCanPlayerCreateNow(knownRecipes)
 	return doableRecipes;
 end
 
+
+-- TEST, even for partially craftable items
+-- check all recepies and ingredients
+-- list what can player create from them now
+function NS.getAllWhatCanPlayerCreateNow(knownRecipes)
+
+	local allReagents = NS.listAllReagentNames(knownRecipes);
+	local foundReagents = NS.countReagentsInBags(allReagents);
+	--local doableRecipes = NS.checkDoableRecipes(knownRecipes, foundReagents);
+
+	-- return two lists, fullycraftable and partiallycraftable
+	return NS.getFullyAndPartialyCraftableItems(knownRecipes, foundReagents);
+end
+
 -- get table with all reagent names from table with recipes
 -- return: { "reagent1" = 0, "reagent2" = 0, ... }
 function NS.listAllReagentNames(recipes)
@@ -216,6 +230,82 @@ function NS.checkDoableRecipes(recipes, reagents)
 	return doable;
 end
 
+
+--[[
+	Check if item is craftable
+	return two boolean values: craftable, fullyCraftable
+
+	For fully craftable return: true, true (we have enough reagents)
+	For partially craftable return: true, false (we have some reagents but not enough)
+	For noncraftable return: false, false (we have no reagents)	
+--]]
+function NS.isCraftable(reagentsList, reagentsAvailable)
+	local reagents = {};
+
+	-- make balance first
+	for reagentName, reagentCountNeeded in pairs(reagentsList) do
+		local available = 0;
+
+		if reagentsAvailable[reagentName] ~= nil then
+			available = reagentsAvailable[reagentName];
+		end
+
+		table.insert(reagents, { name = reagentName, need = reagentCountNeeded, available = available } );
+	end
+
+	
+	-- now make calculations
+
+	local someReagentMissingCompletelly = false;
+	local someReagentFullyAvailable = false;
+	local someReagentPartiallyAvailable = false;	
+
+	for _,reagent in ipairs(reagents) do
+		if reagent.available == 0 then
+			someReagentMissingCompletelly = true;
+		elseif reagent.need <= reagent.available then
+			someReagentFullyAvailable = true;
+		else
+			someReagentPartiallyAvailable = true;
+		end
+	end
+
+	if someReagentFullyAvailable == true and someReagentMissingCompletelly == false and someReagentPartiallyAvailable == false then
+		return true, true; -- fully craftable
+	elseif someReagentPartiallyAvailable == true or someReagentFullyAvailable == true then
+		return true, false; -- partially craftable
+	else
+		return false, false; -- noncraftable
+	end
+
+end
+
+-- find items for which we have some reagents but other reagents are missing
+-- recipes = table with recipes and their ingredients(reagents), divided by skills (blacksmithing, mining...)
+-- reagentsAvailable = list of reagents that player already has
+function NS.getFullyAndPartialyCraftableItems(recipes, reagentsAvailable)
+	local fullyCraftableList = {};
+	local partiallyCraftableList = {};
+
+	for skillName, recipesList in pairs(recipes) do
+
+		for recipeName, recipeInfo in pairs(recipesList) do
+
+			local craftable, fullyCraftable = NS.isCraftable(recipeInfo.reagents, reagentsAvailable);
+
+			if fullyCraftable == true then
+				table.insert(fullyCraftableList, recipeName);
+			elseif craftable == true then
+				table.insert(partiallyCraftableList, recipeName);
+			end
+		end
+
+	end
+
+	return fullyCraftableList, partiallyCraftableList;
+end
+
+
 --[[
 -- check in which recepies (known to player) is itemName used
 -- return { [0] = {recipeName = name1, skillType = skillType1 }, ...}
@@ -261,7 +351,7 @@ function NS.getBestCraftableSkillType(items)
 end
 
 
--- true if id belongs to some proffesion skill skillName
+-- true if id belongs to some profession skill
 function NS.isIdOfProfession(professionIdList, actionId)
 	local found = false;
 

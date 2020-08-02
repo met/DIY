@@ -65,18 +65,38 @@ function dataobj:OnTooltipShow()
 	self:AddLine(cWhite.."Craftable:");
 	self:AddLine(" ");
 
-	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+	local verbose = IsShiftKeyDown();
 
-	for skillName, creatableItemsList in pairs(creatableItems) do
-		self:AddLine(cGreen1..skillName);
+	if verbose == false then
 
-		for i, item in pairs(creatableItemsList) do
-			local color = NS.skillTypes[item.skillType];
-			self:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
+		local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+
+		for skillName, creatableItemsList in pairs(creatableItems) do
+			self:AddLine(cGreen1..skillName);
+
+			for i, item in pairs(creatableItemsList) do
+				local color = NS.skillTypes[item.skillType];
+				self:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
+			end
+
+			self:AddLine(" ");
 		end
 
-		self:AddLine(" ");		
+	else
+
+		-- TODO not good, is really too long
+		local fullyCraftableItemsList, partiallyCraftableItemsList = NS.getAllWhatCanPlayerCreateNow(NS.data.knownRecipes);
+
+		self:AddLine("Craftable:");
+
+		for i, item in ipairs(fullyCraftableItemsList) do
+			self:AddLine(item);
+		end
+
+		self:AddLine("Partially craftable:");
+		for i, item in ipairs(partiallyCraftableItemsList) do
+			self:AddLine(item);
+		end		
 	end
 
-	-- TODO with shift can show partially craftable items (when some reagents are missing)
 end
