@@ -65,38 +65,17 @@ function dataobj:OnTooltipShow()
 	self:AddLine(cWhite.."Craftable:");
 	self:AddLine(" ");
 
-	local verbose = IsShiftKeyDown();
+	local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
 
-	if verbose == false then
+	for skillName, creatableItemsList in pairs(creatableItems) do
+		self:AddLine(cGreen1..skillName);
 
-		local creatableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
-
-		for skillName, creatableItemsList in pairs(creatableItems) do
-			self:AddLine(cGreen1..skillName);
-
-			for i, item in pairs(creatableItemsList) do
-				local color = NS.skillTypes[item.skillType];
-				self:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
-			end
-
-			self:AddLine(" ");
+		for i, item in pairs(creatableItemsList) do
+			local color = NS.skillTypes[item.skillType];
+			self:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
 		end
 
-	else
-
-		-- TODO not good, is really too long
-		local fullyCraftableItemsList, partiallyCraftableItemsList = NS.getAllWhatCanPlayerCreateNow(NS.data.knownRecipes);
-
-		self:AddLine("Craftable:");
-
-		for i, item in ipairs(fullyCraftableItemsList) do
-			self:AddLine(item);
-		end
-
-		self:AddLine("Partially craftable:");
-		for i, item in ipairs(partiallyCraftableItemsList) do
-			self:AddLine(item);
-		end		
+		self:AddLine(" ");
 	end
 
 end

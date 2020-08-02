@@ -22,11 +22,12 @@ SOFTWARE.
 
 local addonName, NS = ...;
 
-local cYellow = "\124cFFFFFF00";
+local cYellow = "\124cFFFFFF00";  -- cFF + R + G + B
 local cWhite = "\124cFFFFFFFF";
 local cRed = "\124cFFFF0000";
 local cLightBlue = "\124cFFadd8e6";
 local cGreen1 = "\124cFF38FFBE";
+local cGray = "\124cFF9D9D9D";
 
 
 
@@ -46,48 +47,89 @@ local function initProffesionList()
 end
 
 
+-- Hook tooltip for all action buttons. For skill buttons show list of creatable items by that skill
 local function hookedActionButtonTooltip(self)
 	local actionType, slotId, subType = GetActionInfo(self.action);
 	-- actionType can be item or spell (all skill buttong are has actionType="spell")
-	-- print("slotId=",slotId," actionType=",actionType," subType=",subType);
+
+	local verbose = IsShiftKeyDown();
 
 	if profIDs[slotId] ~= nil then -- this tooltip is for proffesion action button
 		
-		local craftableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+		local skillName = profIDs[slotId]; -- blacksmithing, cooking...
 
-		if craftableItems[profIDs[slotId]] ~= nil then -- found something craftable for this profession
-			GameTooltip:AddLine(cGreen1.."Can create:");
 
-			for i, item in ipairs(craftableItems[profIDs[slotId]]) do
-				local color = NS.skillTypes[item.skillType]; -- skill color
-				GameTooltip:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
+		if verbose == false then
+
+			local craftableItems = NS.whatCanPlayerCreateNow(NS.data.knownRecipes);
+
+			if craftableItems[profIDs[slotId]] ~= nil then -- found something craftable for this profession
+				GameTooltip:AddLine(cGreen1.."Can create:");
+
+				for i, item in ipairs(craftableItems[profIDs[slotId]]) do
+					local color = NS.skillTypes[item.skillType]; -- skill color
+					GameTooltip:AddDoubleLine(item.recipeName, item.count, color.r,color.g,color.b,0,1,0);
+				end
+
+				GameTooltip:Show();
+
 			end
 
+		else -- verbose == true, show partially craftable
+			-- I am not happy with this, need to be improved somehow, too long list, not much use now
+
+			local fullyCraftableItemsList, partiallyCraftableItemsList = NS.getAllWhatCanPlayerCreateNow(NS.data.knownRecipes, skillName);
+
+			GameTooltip:AddLine("Partially craftable:");
+			for i, item in ipairs(partiallyCraftableItemsList) do
+
+				local missingReagentsList = NS.whichReagentsAreMissing(item.recipeName, NS.data.knownRecipes);
+				local color = NS.skillTypes[item.skillType]; -- skill color
+
+				if missingReagentsList ~= nil then
+					GameTooltip:AddLine(item.recipeName..cGray.." - missing: "..table.concat(missingReagentsList, ","), color.r, color.g, color.b);
+				end
+			end	
+
 			GameTooltip:Show();
-
 		end
-
 	end
 
 	return;	
 end
 
+-- Hook tooltip for all items, show for which recipes they are used for
 function hookedItemTooltip(tooltip)
 	local itemName, itemLink = tooltip:GetItem();
 	local usedInRecipes = NS.whereIsItemUsed(itemName, NS.data.knownRecipes);
+
+	local verbose = IsShiftKeyDown();
 
 	if usedInRecipes ~= nil and #usedInRecipes > 0 then
 
 		tooltip:AddLine("Used in:");
 		for _,recipeInfo in ipairs(usedInRecipes) do
 			local color = NS.skillTypes[recipeInfo.skillType];
-			tooltip:AddLine(recipeInfo.recipeName, color.r, color.g, color.b);
+
+			if verbose == true then
+				local missingReagentsList = NS.whichReagentsAreMissing(recipeInfo.recipeName, NS.data.knownRecipes);
+
+				if missingReagentsList ~= nil then
+
+					if #missingReagentsList == 0 then
+						-- no missing reagents
+						tooltip:AddLine("* "..recipeInfo.recipeName, color.r, color.g, color.b);
+					else
+						-- some reagent missing
+						tooltip:AddLine(recipeInfo.recipeName..cGray.." - missing: "..table.concat(missingReagentsList, ","), color.r, color.g, color.b);
+					end
+				end
+			else -- no verbose, show only list of items
+				tooltip:AddLine(recipeInfo.recipeName, color.r, color.g, color.b);
+			end
 		end
 		tooltip:Show();
 	end
-
-	--TODO with shift can show more information (e.g. which recepies are craftable, amount, and for noncraftable which other reagents are missing)
-	-- need to go though all bags NS.countReagentsInBags() (and cache, that is invalidated by BAG UPDATE event) and make invertoty of reagents, then go through all recipes and mark which are craftable, which are partly craftable (and what is missing) (also cache this)
 end
 
 

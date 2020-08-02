@@ -191,27 +191,24 @@ end
 -- check all recepies and ingredients
 -- list what can player create from them now
 function NS.whatCanPlayerCreateNow(knownRecipes)
-
 	local allReagents = NS.listAllReagentNames(knownRecipes);
 	local foundReagents = NS.countReagentsInBags(allReagents);
 	local doableRecipes = NS.checkDoableRecipes(knownRecipes, foundReagents);
 
-	-- TODO: only for trade skill, now craft skills yet (eg. enchanting)
 	return doableRecipes;
 end
 
 
--- TEST, even for partially craftable items
 -- check all recepies and ingredients
--- list what can player create from them now
-function NS.getAllWhatCanPlayerCreateNow(knownRecipes)
+-- list what can player create from them now, even partially craftable items
+function NS.getAllWhatCanPlayerCreateNow(knownRecipes, optionalSkillFilter)
 
 	local allReagents = NS.listAllReagentNames(knownRecipes);
 	local foundReagents = NS.countReagentsInBags(allReagents);
 	--local doableRecipes = NS.checkDoableRecipes(knownRecipes, foundReagents);
 
 	-- return two lists, fullycraftable and partiallycraftable
-	return NS.getFullyAndPartialyCraftableItems(knownRecipes, foundReagents);
+	return NS.getFullyAndPartialyCraftableItems(knownRecipes, foundReagents, optionalSkillFilter);
 end
 
 -- get table with all reagent names from table with recipes
@@ -364,23 +361,28 @@ end
 -- find items for which we have some reagents but other reagents are missing
 -- recipes = table with recipes and their ingredients(reagents), divided by skills (blacksmithing, mining...)
 -- reagentsAvailable = list of reagents that player already has
-function NS.getFullyAndPartialyCraftableItems(recipes, reagentsAvailable)
+-- return: 2 lists
+function NS.getFullyAndPartialyCraftableItems(recipes, reagentsAvailable, optionalSkillFilter)
 	local fullyCraftableList = {};
 	local partiallyCraftableList = {};
 
 	for skillName, recipesList in pairs(recipes) do
 
-		for recipeName, recipeInfo in pairs(recipesList) do
+		if optionalSkillFilter == nil or optionalSkillFilter == skillName then -- if filter is specified, check only skillName given in filter
 
-			local craftable, fullyCraftable = NS.isCraftable(recipeInfo.reagents, reagentsAvailable);
+			for recipeName, recipeInfo in pairs(recipesList) do
 
-			if fullyCraftable == true then
-				table.insert(fullyCraftableList, recipeName);
-			elseif craftable == true then
-				table.insert(partiallyCraftableList, recipeName);
+				local craftable, fullyCraftable = NS.isCraftable(recipeInfo.reagents, reagentsAvailable);
+
+				if fullyCraftable == true then
+					--table.insert(fullyCraftableList, recipeName);
+					table.insert(fullyCraftableList, {recipeName = recipeName, skillType = recipeInfo.skillType});
+				elseif craftable == true then
+					--table.insert(partiallyCraftableList, recipeName);
+					table.insert(partiallyCraftableList, {recipeName = recipeName, skillType = recipeInfo.skillType});
+				end
 			end
 		end
-
 	end
 
 	return fullyCraftableList, partiallyCraftableList;
@@ -415,6 +417,52 @@ function NS.whereIsItemUsed(itemName, knownRecipes)
 	end
 
 	return itemIsUsedIn;
+end
+
+
+-- Identify missing reagents (return list of their names)
+function NS.whichReagentsAreMissing(recipeName, knownRecipes)
+	local recipe = NS.findRecipeByName(recipeName, knownRecipes);
+
+	if recipe == nil then
+		return nil; -- did not found recipe
+	end
+
+	local whatIsMissing =  {}; -- list with names of missing reagents
+
+	local allReagents = NS.listAllReagentNames(knownRecipes);
+	local haveReagents = NS.countReagentsInBags(allReagents);
+
+	for reagentName,reagentCountNeed in pairs(recipe.reagents) do
+
+		local reagentCountHave = haveReagents[reagentName];
+		if reagentCountHave == nil then
+			reagentCountHave = 0;
+		end
+		
+		if reagentCountNeed > reagentCountHave then
+			table.insert(whatIsMissing, reagentName);
+		end
+	end
+
+	return whatIsMissing;
+end
+
+-- search in known recipes
+function NS.findRecipeByName(recipeName, knownRecipes)
+	local foundRecipe = nil;
+
+	for skillName,recipesList in pairs(knownRecipes) do
+
+		for recipe,recipeInfo in pairs(recipesList) do
+			if recipe == recipeName then
+				foundRecipe = recipeInfo;
+				break;
+			end
+		end
+	end
+
+	return foundRecipe;
 end
 
 -- Check skillTypes from list o items and return the best found skilltype
