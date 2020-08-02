@@ -1,5 +1,5 @@
 # DIY
- DIY is addon for World of Warcraft Classic. Helps you to track which items can you craft with you professional skills.
+ DIY is addon for World of Warcraft Classic. Helps you track which items you can craft with your professional skills.
  
  ## FEATURES
  
