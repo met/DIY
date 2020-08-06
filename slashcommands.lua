@@ -49,12 +49,12 @@ SlashCmdList["DIY"] = function(msg)
 	end
 end
 
-NS.mainCmd = SLASH_DIY1;
+NS.mainSlashCmd = SLASH_DIY1;
 
 function NS.printUsage()
 		print(cYellow, addonName, "usage:");
-		print(cYellow, NS.mainCmd, "help -- this message");
-		print(cYellow, NS.mainCmd, "debug -- set debug on");
-		print(cYellow, NS.mainCmd, "nodebug -- set debug off");
-		print(cYellow, NS.mainCmd, "debug? -- show current debug state");
+		print(cYellow, NS.mainSlashCmd, "help -- this message");
+		print(cYellow, NS.mainSlashCmd, "debug -- set debug on");
+		print(cYellow, NS.mainSlashCmd, "nodebug -- set debug off");
+		print(cYellow, NS.mainSlashCmd, "debug? -- show current debug state");
 end

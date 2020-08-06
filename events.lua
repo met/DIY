@@ -48,7 +48,7 @@ function events.ADDON_LOADED(...)
 		return;
 	end
 
-	print(NS.msgPrefix.."v"..GetAddOnMetadata(addonName, "version")..". Use "..NS.mainCmd.." for help");
+	print(NS.msgPrefix.."v"..GetAddOnMetadata(addonName, "version")..". Use "..NS.mainSlashCmd.." for help");
 
 	if DIYSharedData == nil then
 		DIYSharedData = {};
